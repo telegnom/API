@@ -1,0 +1,537 @@
+swagger: '2.0'
+info:
+  description: API for transactions
+  version: 2.1.0
+  title: Space-Market
+  license:
+    name: MIT
+    url: 'https://opensource.org/licenses/MIT'
+basePath: /v2
+consumes:
+  - application/json
+produces:
+  - application/json
+tags:
+  - name: products
+  - name: users
+  - name: audits
+paths:
+  /info.json:
+    get:
+      description: global server Information
+      responses:
+        '200':
+          description: information
+          schema:
+            type: object
+            required:
+              - version
+            properties:
+              version:
+                type: string
+                example: '2.1'
+  /audits.json:
+    get:
+      tags:
+        - audits
+      summary: statistics about previous transactions
+      description: |
+        statistics about previous transactions
+      parameters:
+        - in: query
+          name: 'start_date[year]'
+          required: false
+          type: integer
+        - in: query
+          name: 'start_date[month]'
+          type: integer
+          minimum: 1
+          maximum: 12
+        - in: query
+          name: 'start_date[day]'
+          type: integer
+          minimum: 1
+          maximum: 31
+        - in: query
+          name: 'end_date[year]'
+          required: false
+          type: integer
+        - in: query
+          name: 'end_date[month]'
+          type: integer
+          minimum: 1
+          maximum: 12
+        - in: query
+          name: 'end_date[day]'
+          type: integer
+          minimum: 1
+          maximum: 31
+        - in: query
+          name: user
+          required: false
+          type: integer
+      responses:
+        '200':
+          description: audits
+          schema:
+            type: object
+            required:
+              - sum
+              - payments_sum
+              - deposits_sum
+              - audits
+            properties:
+              sum:
+                description: sum as cents
+                type: integer
+              payments_sum:
+                description: as cents
+                type: integer
+              deposits_sum:
+                description: as cents
+                type: integer
+              audits:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    created_at:
+                      type: string
+                      format: date-time
+                    difference:
+                      type: integer
+                    product:
+                      type: integer
+        '500':
+          description: Server error
+  /products.json:
+    get:
+      tags:
+        - products
+      summary: returns all products
+      responses:
+        '200':
+          description: products
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Product'
+        '500':
+          description: Server error
+    post:
+      tags:
+        - products
+      summary: creates a new product
+      parameters:
+        - in: body
+          name: product
+          required: true
+          schema:
+            type: object
+            required:
+              - name
+            properties:
+              name:
+                type: string
+              caffeine:
+                type: integer
+                description: mg of caffeine per 100 ml/mg/unit
+              price:
+                type: integer
+                default: 150
+              active:
+                type: boolean
+                default: true
+      responses:
+        '200':
+          description: newly created Product
+          schema:
+            $ref: '#/definitions/Product'
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error
+  '/products/{id}.json':
+    get:
+      tags:
+        - products
+      summary: returns specific product
+      parameters:
+        - in: path
+          required: true
+          name: id
+          type: integer
+      responses:
+        '200':
+          description: product
+          schema:
+            $ref: '#/definitions/Product'
+        '404':
+          description: id not existant
+        '500':
+          description: Server error
+    patch:
+      tags:
+        - products
+      summary: edits specific product
+      parameters:
+        - in: path
+          required: true
+          name: id
+          type: integer
+        - in: body
+          name: product
+          required: true
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              caffeine:
+                type: integer
+                description: mg of caffeine per 100 ml/mg/unit
+              price:
+                type: integer
+              active:
+                type: boolean
+      responses:
+        '200':
+          description: edited Product
+          schema:
+            $ref: '#/definitions/Product'
+        '400':
+          description: Invalid input
+        '404':
+          description: id not existant
+        '500':
+          description: Server error
+    delete:
+      tags:
+        - products
+      summary: deletes specific product
+      parameters:
+        - in: path
+          required: true
+          name: id
+          type: integer
+      responses:
+        '200':
+          description: successfully deleted
+        '404':
+          description: id not existant
+        '500':
+          description: Server error
+  /users.json:
+    get:
+      tags:
+        - users
+      summary: returns all users
+      responses:
+        '200':
+          description: list of users
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/User'
+        '500':
+          description: Server error
+    post:
+      tags:
+        - users
+      summary: creates new User
+      parameters:
+        - in: body
+          required: true
+          name: user
+          schema:
+            type: object
+            required:
+              - name
+            properties:
+              name:
+                type: string
+              email:
+                type: string
+                format: email
+              balance:
+                description: in cents
+                type: integer
+                default: 0
+              active:
+                type: boolean
+                default: true
+              audit:
+                type: boolean
+                default: false
+              redirect:
+                type: boolean
+                default: false
+      responses:
+        '200':
+          description: new user
+          schema:
+            $ref: '#/definitions/User'
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error
+  '/users/{id}.json':
+    get:
+      tags:
+        - users
+      summary: returns specific user
+      parameters:
+        - in: path
+          required: true
+          name: id
+          type: integer
+      responses:
+        '200':
+          description: user
+          schema:
+            $ref: '#/definitions/User'
+        '404':
+          description: id not existant
+        '500':
+          description: Server error
+    patch:
+      tags:
+        - users
+      summary: edits specific user
+      parameters:
+        - in: path
+          required: true
+          name: id
+          type: integer
+        - in: body
+          required: true
+          name: user
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+              email:
+                type: string
+                format: email
+              balance:
+                description: in cents
+                type: integer
+              active:
+                type: boolean
+              audit:
+                type: boolean
+              redirect:
+                type: boolean
+      responses:
+        '200':
+          description: edited user
+          schema:
+            $ref: '#/definitions/User'
+        '400':
+          description: Invalid input
+        '404':
+          description: id not existant
+        '500':
+          description: Server error
+    delete:
+      tags:
+        - users
+      summary: deletes user
+      parameters:
+        - in: path
+          required: true
+          name: id
+          type: integer
+      responses:
+        '200':
+          description: success
+        '404':
+          description: id not existant
+        '500':
+          description: Server error
+  '/users/{id}/deposit.json':
+    post:
+      tags:
+        - users
+      summary: adds amount (in cents) to the balance of the user with id
+      parameters:
+        - in: path
+          required: true
+          name: id
+          type: integer
+        - in: body
+          name: amount
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: success
+        '400':
+          description: Invalid input
+        '404':
+          description: id not existant
+        '500':
+          description: Server error
+  '/users/{id}/pay.json':
+    post:
+      tags:
+        - users
+      summary: subtracts amount (in cents) from the balance of the user with id
+      parameters:
+        - in: path
+          required: true
+          name: id
+          type: integer
+        - in: body
+          name: amount
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: success
+        '400':
+          description: Invalid input
+        '404':
+          description: id not existant
+        '500':
+          description: Server error
+  '/users/{id}/product.json':
+    post:
+      tags:
+        - users
+      summary: buys product with id product from user with id
+      parameters:
+        - in: path
+          required: true
+          name: id
+          type: integer
+        - in: body
+          name: product
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: success
+        '400':
+          description: Invalid input
+        '404':
+          description: id not existant
+        '500':
+          description: Server error
+  '/users/{id}/buy_barcode.json':
+    post:
+      tags:
+        - users
+      summary: buys product with barcode for user with id
+      parameters:
+        - in: path
+          required: true
+          name: id
+          type: integer
+        - in: body
+          required: true
+          name: barcode
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: success
+        '400':
+          description: Invalid input
+        '404':
+          description: id not existant
+        '500':
+          description: Server error
+  /users/stats.json:
+    get:
+      tags:
+        - users
+      summary: stats about users
+      responses:
+        '200':
+          description: stats
+          schema:
+            type: object
+            required:
+              - user_count
+              - balance_sum
+            properties:
+              user_count:
+                type: integer
+              balance_sum:
+                description: as cents
+                type: integer
+        '500':
+          description: Server error
+definitions:
+  Product:
+    type: object
+    required:
+      - name
+      - id
+      - price
+      - created_at
+      - updated_at
+      - active
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      caffeine:
+        type: integer
+        description: mg of caffeine per 100 ml/mg/unit
+      price:
+        type: integer
+        default: 150
+      created_at:
+        type: string
+        format: date-time
+      updated_at:
+        type: string
+        format: date-time
+      active:
+        type: boolean
+        default: true
+  User:
+    type: object
+    required:
+      - name
+      - id
+      - created_at
+      - updated_at
+      - balance
+      - active
+      - audit
+      - redirect
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      email:
+        type: string
+        format: email
+      created_at:
+        type: string
+        format: date-time
+      updated_at:
+        type: string
+        format: date-time
+      balance:
+        description: in cents
+        type: integer
+      active:
+        type: boolean
+        default: true
+      audit:
+        type: boolean
+        default: false
+      redirect:
+        type: boolean
